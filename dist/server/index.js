@@ -153,6 +153,18 @@ const html = `<!doctype html>
       font-weight: 750;
     }
 
+    input[type="number"] {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+      font-weight: 750;
+    }
+
     input[type="text"] {
       margin-top: 10px;
       text-transform: uppercase;
@@ -175,6 +187,47 @@ const html = `<!doctype html>
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+    }
+
+    .init-panel {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .init-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .init-title {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .init-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .precursor {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 70px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .mini-swatch {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--swatch);
     }
 
     button {
@@ -267,7 +320,7 @@ const html = `<!doctype html>
     }
 
     @media (max-width: 860px) {
-      header, .layout, .compare, .standard-row {
+      header, .layout, .compare, .standard-row, .init-grid {
         grid-template-columns: 1fr;
       }
 
@@ -281,7 +334,7 @@ const html = `<!doctype html>
     <header>
       <div>
         <h1>Color distance standards</h1>
-        <p class="lede">Compare two colors side by side, then choose the standard from the dropdown. CIEDE2000 stays local; Helmlab standards load when available.</p>
+        <p class="lede">Initialize the four sensor-detected precursor colors, mix them by RYBW proportions, then compare the target against the calculated mixture.</p>
       </div>
       <div class="badge"><span></span> Side by side</div>
     </header>
@@ -292,18 +345,62 @@ const html = `<!doctype html>
           <div class="color-card">
             <div id="swatch1" class="swatch" style="--swatch:#ff6b35"></div>
             <div class="card-body">
-              <label for="color1">Color 1</label>
+              <label for="color1">Target color</label>
               <input id="color1" type="color" value="#ff6b35">
-              <input id="hex1" type="text" value="#ff6b35" maxlength="7" spellcheck="false" aria-label="Color 1 HEX value">
+              <input id="hex1" type="text" value="#ff6b35" maxlength="7" spellcheck="false" aria-label="Target color HEX value">
             </div>
           </div>
 
           <div class="color-card">
-            <div id="swatch2" class="swatch" style="--swatch:#2f80ed"></div>
+            <div id="swatch2" class="swatch" style="--swatch:#c68348"></div>
             <div class="card-body">
-              <label for="color2">Color 2</label>
-              <input id="color2" type="color" value="#2f80ed">
-              <input id="hex2" type="text" value="#2f80ed" maxlength="7" spellcheck="false" aria-label="Color 2 HEX value">
+              <label for="color2">RYBW mix result</label>
+              <input id="color2" type="color" value="#c68348" disabled>
+              <input id="hex2" type="text" value="#c68348" maxlength="7" spellcheck="false" aria-label="Mixed color HEX value" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="init-panel" aria-label="Precursor initialization">
+          <div class="init-head">
+            <div>
+              <h2 class="init-title">Initialization</h2>
+              <div class="note">Enter the RGB/HEX codes detected by the sensor for each precursor. Default RYBW ratio is 5:3:1:1.</div>
+            </div>
+          </div>
+
+          <div class="init-grid">
+            <div>
+              <label for="redHex">Red</label>
+              <div class="precursor">
+                <div id="redSwatch" class="mini-swatch" style="--swatch:#ff2d2d"></div>
+                <input id="redHex" type="text" value="#ff2d2d" maxlength="7" spellcheck="false">
+                <input id="redPart" type="number" value="5" min="0" step="0.1" aria-label="Red proportion">
+              </div>
+            </div>
+            <div>
+              <label for="yellowHex">Yellow</label>
+              <div class="precursor">
+                <div id="yellowSwatch" class="mini-swatch" style="--swatch:#ffd735"></div>
+                <input id="yellowHex" type="text" value="#ffd735" maxlength="7" spellcheck="false">
+                <input id="yellowPart" type="number" value="3" min="0" step="0.1" aria-label="Yellow proportion">
+              </div>
+            </div>
+            <div>
+              <label for="blueHex">Blue</label>
+              <div class="precursor">
+                <div id="blueSwatch" class="mini-swatch" style="--swatch:#246bff"></div>
+                <input id="blueHex" type="text" value="#246bff" maxlength="7" spellcheck="false">
+                <input id="bluePart" type="number" value="1" min="0" step="0.1" aria-label="Blue proportion">
+              </div>
+            </div>
+            <div>
+              <label for="waterHex">Water</label>
+              <div class="precursor">
+                <div id="waterSwatch" class="mini-swatch" style="--swatch:#f7fbff"></div>
+                <input id="waterHex" type="text" value="#f7fbff" maxlength="7" spellcheck="false">
+                <input id="waterPart" type="number" value="1" min="0" step="0.1" aria-label="Water proportion">
+              </div>
             </div>
           </div>
         </div>
@@ -321,11 +418,11 @@ const html = `<!doctype html>
             </select>
           </div>
 
-          <div class="examples" aria-label="Example color pairs">
-            <button type="button" data-a="#3366ff" data-b="#3f70f2">Close blues</button>
-            <button type="button" data-a="#ff0000" data-b="#00ff00">Red / green</button>
-            <button type="button" data-a="#222222" data-b="#2a2a2a">Near blacks</button>
-            <button type="button" data-a="#f7d154" data-b="#f2c94c">Warm yellows</button>
+          <div class="examples" aria-label="Example target colors">
+            <button type="button" data-a="#c68348">Use current mix</button>
+            <button type="button" data-a="#b95f2f">Warm target</button>
+            <button type="button" data-a="#8c6a54">Muted target</button>
+            <button type="button" data-a="#d9a15f">Light target</button>
           </div>
         </div>
       </div>
@@ -348,7 +445,7 @@ const html = `<!doctype html>
     </section>
 
     <footer>
-      Use CIEDE2000 for the common industry standard. Use Helmlab trained metric or JND when CEID wants its newer perceptual model.
+      The mix is a sensor-space weighted RGB estimate from RYBW. If CEID later gives physical calibration curves, this can be upgraded from linear RGB mixing.
     </footer>
   </main>
 
@@ -371,6 +468,12 @@ const html = `<!doctype html>
     const rgbValue = document.getElementById("rgbValue");
     const helmValue = document.getElementById("helmValue");
     const jndValue = document.getElementById("jndValue");
+    const precursorInputs = {
+      red: { hex: document.getElementById("redHex"), part: document.getElementById("redPart"), swatch: document.getElementById("redSwatch") },
+      yellow: { hex: document.getElementById("yellowHex"), part: document.getElementById("yellowPart"), swatch: document.getElementById("yellowSwatch") },
+      blue: { hex: document.getElementById("blueHex"), part: document.getElementById("bluePart"), swatch: document.getElementById("blueSwatch") },
+      water: { hex: document.getElementById("waterHex"), part: document.getElementById("waterPart"), swatch: document.getElementById("waterSwatch") }
+    };
     let helmlab = null;
     let helmlabFailed = false;
 
@@ -490,6 +593,32 @@ const html = `<!doctype html>
       return Math.sqrt(Math.pow(a.r - b.r, 2) + Math.pow(a.g - b.g, 2) + Math.pow(a.b - b.b, 2));
     }
 
+    function rgbToHex({ r, g, b }) {
+      const toHex = (value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0");
+      return "#" + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    function calculateMixHex() {
+      let total = 0;
+      const acc = { r: 0, g: 0, b: 0 };
+
+      for (const key of Object.keys(precursorInputs)) {
+        const input = precursorInputs[key];
+        if (!validHex(input.hex.value)) return null;
+        const hex = normalizeHex(input.hex.value);
+        const part = Math.max(0, Number(input.part.value) || 0);
+        const rgb = hexToRgb(hex);
+        input.swatch.style.setProperty("--swatch", hex);
+        total += part;
+        acc.r += rgb.r * part;
+        acc.g += rgb.g * part;
+        acc.b += rgb.b * part;
+      }
+
+      if (total <= 0) return null;
+      return rgbToHex({ r: acc.r / total, g: acc.g / total, b: acc.b / total });
+    }
+
     function describe(value, standard) {
       if (standard === "rgb") return "RGB distance is simple but less perceptual than Lab-based standards.";
       if (standard === "frechet") return "For two single colors, Fréchet equals the point-to-point Lab path distance.";
@@ -507,7 +636,7 @@ const html = `<!doctype html>
       labelEl.textContent = labels[standard];
       distanceEl.textContent = Number.isFinite(value) ? value.toFixed(standard === "helmlab" ? 4 : 2) : "--";
       meaningEl.textContent = Number.isFinite(value) ? describe(value, standard) : "This standard is not available yet.";
-      noteEl.innerHTML = note || "";
+      noteEl.innerHTML = note || "Mix source: RYBW sensor colors at " + precursorInputs.red.part.value + ":" + precursorInputs.yellow.part.value + ":" + precursorInputs.blue.part.value + ":" + precursorInputs.water.part.value + ".";
       const scale = standard === "rgb" ? 441 : standard === "helmlab" ? 0.16 : standard === "jnd" ? 5 : 35;
       markerEl.style.transform = "translateX(" + (Math.min(value || 0, scale) / scale * 356) + "px)";
     }
@@ -524,18 +653,20 @@ const html = `<!doctype html>
     }
 
     async function update() {
-      if (!validHex(hex1Input.value) || !validHex(hex2Input.value)) {
+      const mixHex = calculateMixHex();
+      if (!validHex(hex1Input.value) || !mixHex) {
         distanceEl.textContent = "--";
-        meaningEl.innerHTML = '<span class="error">Use HEX like #ff6b35 or #f63.</span>';
+        meaningEl.innerHTML = '<span class="error">Use valid precursor HEX values and at least one positive proportion.</span>';
         noteEl.textContent = "";
         return;
       }
 
       const hex1 = normalizeHex(hex1Input.value);
-      const hex2 = normalizeHex(hex2Input.value);
+      const hex2 = mixHex;
       const standard = standardInput.value;
       color1Input.value = hex1;
       color2Input.value = hex2;
+      hex2Input.value = hex2;
       swatch1.style.setProperty("--swatch", hex1);
       swatch2.style.setProperty("--swatch", hex2);
 
@@ -577,14 +708,15 @@ const html = `<!doctype html>
     }
 
     color1Input.addEventListener("input", () => { hex1Input.value = color1Input.value; update(); });
-    color2Input.addEventListener("input", () => { hex2Input.value = color2Input.value; update(); });
     hex1Input.addEventListener("input", update);
-    hex2Input.addEventListener("input", update);
     standardInput.addEventListener("change", update);
+    Object.values(precursorInputs).forEach((input) => {
+      input.hex.addEventListener("input", update);
+      input.part.addEventListener("input", update);
+    });
     document.querySelectorAll("button[data-a]").forEach((button) => {
       button.addEventListener("click", () => {
         hex1Input.value = button.dataset.a;
-        hex2Input.value = button.dataset.b;
         update();
       });
     });
