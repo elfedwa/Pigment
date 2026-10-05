@@ -212,22 +212,35 @@ const html = `<!doctype html>
 
     .init-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
 
     .precursor {
       display: grid;
-      grid-template-columns: 42px repeat(3, minmax(0, 1fr)) 70px;
-      gap: 8px;
-      align-items: end;
+      grid-template-columns: 52px repeat(4, minmax(70px, 1fr));
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid #edf0f2;
+      border-radius: 8px;
+      background: #fbfcfd;
     }
 
     .mini-swatch {
-      height: 42px;
+      height: 52px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--swatch);
+    }
+
+    .rgb-field span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 850;
+      text-transform: uppercase;
     }
 
     button {
@@ -324,6 +337,10 @@ const html = `<!doctype html>
         grid-template-columns: 1fr;
       }
 
+      .precursor {
+        grid-template-columns: 52px repeat(2, minmax(0, 1fr));
+      }
+
       .result { position: static; }
       .swatch { height: 160px; }
     }
@@ -374,40 +391,40 @@ const html = `<!doctype html>
               <label for="redR">Red sensor RGB</label>
               <div class="precursor">
                 <div id="redSwatch" class="mini-swatch" style="--swatch:#ff2d2d"></div>
-                <input id="redR" type="number" value="255" min="0" max="255" step="1" aria-label="Red precursor R">
-                <input id="redG" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor G">
-                <input id="redB" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor B">
-                <input id="redPart" type="number" value="5" min="0" step="0.1" aria-label="Red proportion">
+                <div class="rgb-field"><span>R</span><input id="redR" type="number" value="255" min="0" max="255" step="1" aria-label="Red precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="redG" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="redB" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor B"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="redPart" type="number" value="5" min="0" step="0.1" aria-label="Red proportion"></div>
               </div>
             </div>
             <div>
               <label for="yellowR">Yellow sensor RGB</label>
               <div class="precursor">
                 <div id="yellowSwatch" class="mini-swatch" style="--swatch:#ffd735"></div>
-                <input id="yellowR" type="number" value="255" min="0" max="255" step="1" aria-label="Yellow precursor R">
-                <input id="yellowG" type="number" value="215" min="0" max="255" step="1" aria-label="Yellow precursor G">
-                <input id="yellowB" type="number" value="53" min="0" max="255" step="1" aria-label="Yellow precursor B">
-                <input id="yellowPart" type="number" value="3" min="0" step="0.1" aria-label="Yellow proportion">
+                <div class="rgb-field"><span>R</span><input id="yellowR" type="number" value="255" min="0" max="255" step="1" aria-label="Yellow precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="yellowG" type="number" value="215" min="0" max="255" step="1" aria-label="Yellow precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="yellowB" type="number" value="53" min="0" max="255" step="1" aria-label="Yellow precursor B"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="yellowPart" type="number" value="3" min="0" step="0.1" aria-label="Yellow proportion"></div>
               </div>
             </div>
             <div>
               <label for="blueR">Blue sensor RGB</label>
               <div class="precursor">
                 <div id="blueSwatch" class="mini-swatch" style="--swatch:#246bff"></div>
-                <input id="blueR" type="number" value="36" min="0" max="255" step="1" aria-label="Blue precursor R">
-                <input id="blueG" type="number" value="107" min="0" max="255" step="1" aria-label="Blue precursor G">
-                <input id="blueB" type="number" value="255" min="0" max="255" step="1" aria-label="Blue precursor B">
-                <input id="bluePart" type="number" value="1" min="0" step="0.1" aria-label="Blue proportion">
+                <div class="rgb-field"><span>R</span><input id="blueR" type="number" value="36" min="0" max="255" step="1" aria-label="Blue precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="blueG" type="number" value="107" min="0" max="255" step="1" aria-label="Blue precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="blueB" type="number" value="255" min="0" max="255" step="1" aria-label="Blue precursor B"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="bluePart" type="number" value="1" min="0" step="0.1" aria-label="Blue proportion"></div>
               </div>
             </div>
             <div>
               <label for="waterR">Water sensor RGB</label>
               <div class="precursor">
                 <div id="waterSwatch" class="mini-swatch" style="--swatch:#f7fbff"></div>
-                <input id="waterR" type="number" value="247" min="0" max="255" step="1" aria-label="Water precursor R">
-                <input id="waterG" type="number" value="251" min="0" max="255" step="1" aria-label="Water precursor G">
-                <input id="waterB" type="number" value="255" min="0" max="255" step="1" aria-label="Water precursor B">
-                <input id="waterPart" type="number" value="1" min="0" step="0.1" aria-label="Water proportion">
+                <div class="rgb-field"><span>R</span><input id="waterR" type="number" value="247" min="0" max="255" step="1" aria-label="Water precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="waterG" type="number" value="251" min="0" max="255" step="1" aria-label="Water precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="waterB" type="number" value="255" min="0" max="255" step="1" aria-label="Water precursor B"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="waterPart" type="number" value="1" min="0" step="0.1" aria-label="Water proportion"></div>
               </div>
             </div>
           </div>
