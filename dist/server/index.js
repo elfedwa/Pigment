@@ -438,7 +438,7 @@ const html = `<!doctype html>
                 <div class="rgb-field"><span>R</span><input id="redR" type="number" value="255" min="0" max="255" step="1" aria-label="Red precursor R"></div>
                 <div class="rgb-field"><span>G</span><input id="redG" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor G"></div>
                 <div class="rgb-field"><span>B</span><input id="redB" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor B"></div>
-                <div class="rgb-field"><span>Ratio</span><input id="redPart" type="number" value="5" min="0" step="0.1" aria-label="Red proportion"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="redPart" type="number" value="5" min="0" max="10" step="1" aria-label="Red proportion"></div>
               </div>
             </div>
             <div>
@@ -448,7 +448,7 @@ const html = `<!doctype html>
                 <div class="rgb-field"><span>R</span><input id="yellowR" type="number" value="255" min="0" max="255" step="1" aria-label="Yellow precursor R"></div>
                 <div class="rgb-field"><span>G</span><input id="yellowG" type="number" value="215" min="0" max="255" step="1" aria-label="Yellow precursor G"></div>
                 <div class="rgb-field"><span>B</span><input id="yellowB" type="number" value="53" min="0" max="255" step="1" aria-label="Yellow precursor B"></div>
-                <div class="rgb-field"><span>Ratio</span><input id="yellowPart" type="number" value="3" min="0" step="0.1" aria-label="Yellow proportion"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="yellowPart" type="number" value="3" min="0" max="10" step="1" aria-label="Yellow proportion"></div>
               </div>
             </div>
             <div>
@@ -458,7 +458,7 @@ const html = `<!doctype html>
                 <div class="rgb-field"><span>R</span><input id="blueR" type="number" value="36" min="0" max="255" step="1" aria-label="Blue precursor R"></div>
                 <div class="rgb-field"><span>G</span><input id="blueG" type="number" value="107" min="0" max="255" step="1" aria-label="Blue precursor G"></div>
                 <div class="rgb-field"><span>B</span><input id="blueB" type="number" value="255" min="0" max="255" step="1" aria-label="Blue precursor B"></div>
-                <div class="rgb-field"><span>Ratio</span><input id="bluePart" type="number" value="1" min="0" step="0.1" aria-label="Blue proportion"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="bluePart" type="number" value="1" min="0" max="10" step="1" aria-label="Blue proportion"></div>
               </div>
             </div>
             <div>
@@ -468,7 +468,7 @@ const html = `<!doctype html>
                 <div class="rgb-field"><span>R</span><input id="waterR" type="number" value="247" min="0" max="255" step="1" aria-label="Water precursor R"></div>
                 <div class="rgb-field"><span>G</span><input id="waterG" type="number" value="251" min="0" max="255" step="1" aria-label="Water precursor G"></div>
                 <div class="rgb-field"><span>B</span><input id="waterB" type="number" value="255" min="0" max="255" step="1" aria-label="Water precursor B"></div>
-                <div class="rgb-field"><span>Ratio</span><input id="waterPart" type="number" value="1" min="0" step="0.1" aria-label="Water proportion"></div>
+                <div class="rgb-field"><span>Ratio</span><input id="waterPart" type="number" value="1" min="0" max="10" step="1" aria-label="Water proportion"></div>
               </div>
             </div>
           </div>
@@ -731,20 +731,39 @@ const html = `<!doctype html>
       }
 
       const parts = weights.map((value) => value * 10);
-      const rounded = parts.map((value) => Math.round(value * 100) / 100);
-      const drift = 10 - rounded.reduce((sum, value) => sum + value, 0);
-      rounded[rounded.length - 1] = Math.round((rounded[rounded.length - 1] + drift) * 100) / 100;
+      const rounded = integerParts(parts, 10);
       return {
-        parts: rounded.map((value) => Math.max(0, value)),
+        parts: rounded,
         iterations
       };
     }
 
+    function integerParts(parts, total) {
+      const floors = parts.map((value) => Math.max(0, Math.floor(value)));
+      let remaining = total - floors.reduce((sum, value) => sum + value, 0);
+      const order = parts
+        .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+        .sort((a, b) => b.fraction - a.fraction);
+
+      for (let i = 0; i < order.length && remaining > 0; i += 1) {
+        floors[order[i].index] += 1;
+        remaining -= 1;
+      }
+
+      while (remaining < 0) {
+        const index = floors.indexOf(Math.max(...floors));
+        floors[index] -= 1;
+        remaining += 1;
+      }
+
+      return floors;
+    }
+
     function applyParts(parts) {
-      precursorInputs.red.part.value = parts[0].toFixed(2);
-      precursorInputs.yellow.part.value = parts[1].toFixed(2);
-      precursorInputs.blue.part.value = parts[2].toFixed(2);
-      precursorInputs.water.part.value = parts[3].toFixed(2);
+      precursorInputs.red.part.value = String(parts[0]);
+      precursorInputs.yellow.part.value = String(parts[1]);
+      precursorInputs.blue.part.value = String(parts[2]);
+      precursorInputs.water.part.value = String(parts[3]);
     }
 
     function calculateMixHex() {
@@ -756,7 +775,8 @@ const html = `<!doctype html>
         const rgb = readSensorRgb(input);
         if (!rgb) return null;
         const hex = rgbToHex(rgb);
-        const part = Math.max(0, Number(input.part.value) || 0);
+        const part = Math.max(0, Math.min(10, Math.round(Number(input.part.value) || 0)));
+        input.part.value = String(part);
         input.swatch.style.setProperty("--swatch", hex);
         total += part;
         acc.r += rgb.r * part;
@@ -764,7 +784,7 @@ const html = `<!doctype html>
         acc.b += rgb.b * part;
       }
 
-      if (total <= 0) return null;
+      if (total !== 10) return null;
       return rgbToHex({ r: acc.r / total, g: acc.g / total, b: acc.b / total });
     }
 
@@ -807,7 +827,7 @@ const html = `<!doctype html>
       const mixHex = calculateMixHex();
       if (!validHex(hex1Input.value) || !mixHex) {
         distanceEl.textContent = "--";
-        meaningEl.innerHTML = '<span class="error">Use valid precursor HEX values and at least one positive proportion.</span>';
+        meaningEl.innerHTML = '<span class="error">Use valid RGB values and integer ratios that sum to 10.</span>';
         noteEl.textContent = "";
         return;
       }
