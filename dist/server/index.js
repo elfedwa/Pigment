@@ -999,15 +999,18 @@ const html = `<!doctype html>
         return;
       }
       lastBoBest = result.best;
+      const actualSeries = result.observations.map((obs) => obs.distance);
       const bestSeries = result.observations.map((obs, index) => Math.min(...result.observations.slice(0, index + 1).map((item) => item.distance)));
-      const maxY = Math.max(...bestSeries, 1);
-      const points = bestSeries.map((value, index) => {
-        const x = 20 + (index / Math.max(1, bestSeries.length - 1)) * 320;
+      const maxY = Math.max(...actualSeries, ...bestSeries, 1);
+      const toPoints = (series) => series.map((value, index) => {
+        const x = 20 + (index / Math.max(1, series.length - 1)) * 320;
         const y = 140 - (value / maxY) * 110;
         return x.toFixed(1) + "," + y.toFixed(1);
       }).join(" ");
-      const lastPoint = points.split(" ")[points.split(" ").length - 1].split(",");
-      boGraph.innerHTML = '<svg viewBox="0 0 360 160" width="100%" height="100%" role="img" aria-label="BO convergence graph"><line x1="20" y1="140" x2="345" y2="140" stroke="#d7dde3"/><line x1="20" y1="20" x2="20" y2="140" stroke="#d7dde3"/><polyline points="' + points + '" fill="none" stroke="#1f6feb" stroke-width="3"/><circle cx="' + lastPoint[0] + '" cy="' + lastPoint[1] + '" r="4" fill="#1b8a5a"/><text x="24" y="18" font-size="11" fill="#5f6368">best distance</text><text x="300" y="154" font-size="11" fill="#5f6368">iterations</text></svg>';
+      const actualPoints = toPoints(actualSeries);
+      const bestPoints = toPoints(bestSeries);
+      const lastPoint = bestPoints.split(" ")[bestPoints.split(" ").length - 1].split(",");
+      boGraph.innerHTML = '<svg viewBox="0 0 360 160" width="100%" height="100%" role="img" aria-label="BO convergence graph"><line x1="20" y1="140" x2="345" y2="140" stroke="#d7dde3"/><line x1="20" y1="20" x2="20" y2="140" stroke="#d7dde3"/><polyline points="' + actualPoints + '" fill="none" stroke="#c73e5b" stroke-width="2" opacity="0.75"/><polyline points="' + bestPoints + '" fill="none" stroke="#1f6feb" stroke-width="3"/><circle cx="' + lastPoint[0] + '" cy="' + lastPoint[1] + '" r="4" fill="#1b8a5a"/><circle cx="28" cy="18" r="4" fill="#c73e5b"/><text x="38" y="22" font-size="10" fill="#5f6368">actual</text><circle cx="92" cy="18" r="4" fill="#1f6feb"/><text x="102" y="22" font-size="10" fill="#5f6368">best</text><text x="300" y="154" font-size="11" fill="#5f6368">iterations</text></svg>';
       for (const obs of result.observations.slice(-12)) {
         const row = document.createElement("tr");
         row.innerHTML = "<td>" + obs.iter + "</td><td>" + obs.parts.join(":") + "</td><td>" + obs.distance.toFixed(2) + "</td><td>" + Math.min(...result.observations.slice(0, obs.iter).map((item) => item.distance)).toFixed(2) + "</td>";
