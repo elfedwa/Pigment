@@ -218,7 +218,7 @@ const html = `<!doctype html>
 
     .precursor {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr) 70px;
+      grid-template-columns: 42px repeat(3, minmax(0, 1fr)) 70px;
       gap: 8px;
       align-items: end;
     }
@@ -365,40 +365,48 @@ const html = `<!doctype html>
           <div class="init-head">
             <div>
               <h2 class="init-title">Initialization</h2>
-              <div class="note">Enter the RGB/HEX codes detected by the sensor for each precursor. Default RYBW ratio is 5:3:1:1.</div>
+              <div class="note">Enter the RGB values detected by the sensor for each real precursor. Default RYBW ratio is 5:3:1:1.</div>
             </div>
           </div>
 
           <div class="init-grid">
             <div>
-              <label for="redHex">Red</label>
+              <label for="redR">Red sensor RGB</label>
               <div class="precursor">
                 <div id="redSwatch" class="mini-swatch" style="--swatch:#ff2d2d"></div>
-                <input id="redHex" type="text" value="#ff2d2d" maxlength="7" spellcheck="false">
+                <input id="redR" type="number" value="255" min="0" max="255" step="1" aria-label="Red precursor R">
+                <input id="redG" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor G">
+                <input id="redB" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor B">
                 <input id="redPart" type="number" value="5" min="0" step="0.1" aria-label="Red proportion">
               </div>
             </div>
             <div>
-              <label for="yellowHex">Yellow</label>
+              <label for="yellowR">Yellow sensor RGB</label>
               <div class="precursor">
                 <div id="yellowSwatch" class="mini-swatch" style="--swatch:#ffd735"></div>
-                <input id="yellowHex" type="text" value="#ffd735" maxlength="7" spellcheck="false">
+                <input id="yellowR" type="number" value="255" min="0" max="255" step="1" aria-label="Yellow precursor R">
+                <input id="yellowG" type="number" value="215" min="0" max="255" step="1" aria-label="Yellow precursor G">
+                <input id="yellowB" type="number" value="53" min="0" max="255" step="1" aria-label="Yellow precursor B">
                 <input id="yellowPart" type="number" value="3" min="0" step="0.1" aria-label="Yellow proportion">
               </div>
             </div>
             <div>
-              <label for="blueHex">Blue</label>
+              <label for="blueR">Blue sensor RGB</label>
               <div class="precursor">
                 <div id="blueSwatch" class="mini-swatch" style="--swatch:#246bff"></div>
-                <input id="blueHex" type="text" value="#246bff" maxlength="7" spellcheck="false">
+                <input id="blueR" type="number" value="36" min="0" max="255" step="1" aria-label="Blue precursor R">
+                <input id="blueG" type="number" value="107" min="0" max="255" step="1" aria-label="Blue precursor G">
+                <input id="blueB" type="number" value="255" min="0" max="255" step="1" aria-label="Blue precursor B">
                 <input id="bluePart" type="number" value="1" min="0" step="0.1" aria-label="Blue proportion">
               </div>
             </div>
             <div>
-              <label for="waterHex">Water</label>
+              <label for="waterR">Water sensor RGB</label>
               <div class="precursor">
                 <div id="waterSwatch" class="mini-swatch" style="--swatch:#f7fbff"></div>
-                <input id="waterHex" type="text" value="#f7fbff" maxlength="7" spellcheck="false">
+                <input id="waterR" type="number" value="247" min="0" max="255" step="1" aria-label="Water precursor R">
+                <input id="waterG" type="number" value="251" min="0" max="255" step="1" aria-label="Water precursor G">
+                <input id="waterB" type="number" value="255" min="0" max="255" step="1" aria-label="Water precursor B">
                 <input id="waterPart" type="number" value="1" min="0" step="0.1" aria-label="Water proportion">
               </div>
             </div>
@@ -469,10 +477,10 @@ const html = `<!doctype html>
     const helmValue = document.getElementById("helmValue");
     const jndValue = document.getElementById("jndValue");
     const precursorInputs = {
-      red: { hex: document.getElementById("redHex"), part: document.getElementById("redPart"), swatch: document.getElementById("redSwatch") },
-      yellow: { hex: document.getElementById("yellowHex"), part: document.getElementById("yellowPart"), swatch: document.getElementById("yellowSwatch") },
-      blue: { hex: document.getElementById("blueHex"), part: document.getElementById("bluePart"), swatch: document.getElementById("blueSwatch") },
-      water: { hex: document.getElementById("waterHex"), part: document.getElementById("waterPart"), swatch: document.getElementById("waterSwatch") }
+      red: { r: document.getElementById("redR"), g: document.getElementById("redG"), b: document.getElementById("redB"), part: document.getElementById("redPart"), swatch: document.getElementById("redSwatch") },
+      yellow: { r: document.getElementById("yellowR"), g: document.getElementById("yellowG"), b: document.getElementById("yellowB"), part: document.getElementById("yellowPart"), swatch: document.getElementById("yellowSwatch") },
+      blue: { r: document.getElementById("blueR"), g: document.getElementById("blueG"), b: document.getElementById("blueB"), part: document.getElementById("bluePart"), swatch: document.getElementById("blueSwatch") },
+      water: { r: document.getElementById("waterR"), g: document.getElementById("waterG"), b: document.getElementById("waterB"), part: document.getElementById("waterPart"), swatch: document.getElementById("waterSwatch") }
     };
     let helmlab = null;
     let helmlabFailed = false;
@@ -598,16 +606,25 @@ const html = `<!doctype html>
       return "#" + toHex(r) + toHex(g) + toHex(b);
     }
 
+    function readSensorRgb(input) {
+      const r = Number(input.r.value);
+      const g = Number(input.g.value);
+      const b = Number(input.b.value);
+      if (![r, g, b].every(Number.isFinite)) return null;
+      if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) return null;
+      return { r, g, b };
+    }
+
     function calculateMixHex() {
       let total = 0;
       const acc = { r: 0, g: 0, b: 0 };
 
       for (const key of Object.keys(precursorInputs)) {
         const input = precursorInputs[key];
-        if (!validHex(input.hex.value)) return null;
-        const hex = normalizeHex(input.hex.value);
+        const rgb = readSensorRgb(input);
+        if (!rgb) return null;
+        const hex = rgbToHex(rgb);
         const part = Math.max(0, Number(input.part.value) || 0);
-        const rgb = hexToRgb(hex);
         input.swatch.style.setProperty("--swatch", hex);
         total += part;
         acc.r += rgb.r * part;
@@ -711,7 +728,9 @@ const html = `<!doctype html>
     hex1Input.addEventListener("input", update);
     standardInput.addEventListener("change", update);
     Object.values(precursorInputs).forEach((input) => {
-      input.hex.addEventListener("input", update);
+      input.r.addEventListener("input", update);
+      input.g.addEventListener("input", update);
+      input.b.addEventListener("input", update);
       input.part.addEventListener("input", update);
     });
     document.querySelectorAll("button[data-a]").forEach((button) => {
