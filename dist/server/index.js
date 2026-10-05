@@ -314,6 +314,7 @@ const html = `<!doctype html>
             <select id="standard">
               <option value="ciede2000">CIEDE2000 Delta E</option>
               <option value="lab76">CIELAB Delta E 76</option>
+              <option value="frechet">Fréchet distance</option>
               <option value="rgb">RGB Euclidean</option>
               <option value="helmlab">Helmlab trained metric</option>
               <option value="jnd">Helmlab JND</option>
@@ -337,6 +338,7 @@ const html = `<!doctype html>
         <div class="metric-list">
           <div class="metric-row"><span>CIEDE2000</span><strong id="ciedeValue">--</strong></div>
           <div class="metric-row"><span>Lab ΔE76</span><strong id="labValue">--</strong></div>
+          <div class="metric-row"><span>Fréchet</span><strong id="frechetValue">--</strong></div>
           <div class="metric-row"><span>RGB distance</span><strong id="rgbValue">--</strong></div>
           <div class="metric-row"><span>Helmlab</span><strong id="helmValue">Loading</strong></div>
           <div class="metric-row"><span>JND</span><strong id="jndValue">Loading</strong></div>
@@ -365,6 +367,7 @@ const html = `<!doctype html>
     const noteEl = document.getElementById("note");
     const ciedeValue = document.getElementById("ciedeValue");
     const labValue = document.getElementById("labValue");
+    const frechetValue = document.getElementById("frechetValue");
     const rgbValue = document.getElementById("rgbValue");
     const helmValue = document.getElementById("helmValue");
     const jndValue = document.getElementById("jndValue");
@@ -374,6 +377,7 @@ const html = `<!doctype html>
     const labels = {
       ciede2000: "CIEDE2000 Delta E",
       lab76: "CIELAB Delta E 76",
+      frechet: "Fréchet distance",
       rgb: "RGB Euclidean",
       helmlab: "Helmlab trained metric",
       jnd: "Helmlab JND"
@@ -466,6 +470,20 @@ const html = `<!doctype html>
       return Math.sqrt(Math.pow(lab1.L - lab2.L, 2) + Math.pow(lab1.a - lab2.a, 2) + Math.pow(lab1.b - lab2.b, 2));
     }
 
+    function discreteFrechet(pointsA, pointsB, distanceFn) {
+      const cache = Array.from({ length: pointsA.length }, () => Array(pointsB.length).fill(-1));
+      function walk(i, j) {
+        if (cache[i][j] > -1) return cache[i][j];
+        const d = distanceFn(pointsA[i], pointsB[j]);
+        if (i === 0 && j === 0) cache[i][j] = d;
+        else if (i > 0 && j === 0) cache[i][j] = Math.max(walk(i - 1, 0), d);
+        else if (i === 0 && j > 0) cache[i][j] = Math.max(walk(0, j - 1), d);
+        else cache[i][j] = Math.max(Math.min(walk(i - 1, j), walk(i - 1, j - 1), walk(i, j - 1)), d);
+        return cache[i][j];
+      }
+      return walk(pointsA.length - 1, pointsB.length - 1);
+    }
+
     function rgbDistance(hex1, hex2) {
       const a = hexToRgb(hex1);
       const b = hexToRgb(hex2);
@@ -474,6 +492,7 @@ const html = `<!doctype html>
 
     function describe(value, standard) {
       if (standard === "rgb") return "RGB distance is simple but less perceptual than Lab-based standards.";
+      if (standard === "frechet") return "For two single colors, Fréchet equals the point-to-point Lab path distance.";
       if (standard === "helmlab") return "Helmlab trained metric is optimized for perceptual judgments; lower is closer.";
       if (standard === "jnd") return "JND is just-noticeable-difference units; near 1 is around a noticeable threshold.";
       if (value < 1) return "Almost identical.";
@@ -524,9 +543,11 @@ const html = `<!doctype html>
       const lab2 = hexToLab(hex2);
       const ciede = ciede2000(lab1, lab2);
       const lab = lab76(lab1, lab2);
+      const frechet = discreteFrechet([lab1], [lab2], lab76);
       const rgb = rgbDistance(hex1, hex2);
       ciedeValue.textContent = ciede.toFixed(2);
       labValue.textContent = lab.toFixed(2);
+      frechetValue.textContent = frechet.toFixed(2);
       rgbValue.textContent = rgb.toFixed(2);
 
       let helm = null;
@@ -546,6 +567,7 @@ const html = `<!doctype html>
       }
 
       if (standard === "lab76") setMain(lab, standard);
+      else if (standard === "frechet") setMain(frechet, standard);
       else if (standard === "rgb") setMain(rgb, standard);
       else if (standard === "helmlab") {
         setMain(helm ? helm.difference : NaN, standard, helmlabFailed ? '<span class="error">Helmlab could not load from the package CDN in this browser.</span>' : "");
