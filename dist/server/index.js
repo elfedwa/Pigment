@@ -938,8 +938,11 @@ const html = `<!doctype html>
       return Math.sqrt(a.reduce((sum, value, index) => sum + Math.pow(value - b[index], 2), 0));
     }
 
-    function chooseBoCandidate(candidates, observations) {
-      if (observations.length === 0) return candidates.find((candidate) => candidate.join(":") === "5:3:1:1") || candidates[0];
+    function chooseBoCandidate(candidates, observations, seedParts) {
+      if (observations.length === 0) {
+        const seedKey = seedParts ? seedParts.join(":") : "5:3:1:1";
+        return candidates.find((candidate) => candidate.join(":") === seedKey) || candidates[0];
+      }
       let bestCandidate = null;
       let bestAcquisition = Infinity;
       for (const candidate of candidates) {
@@ -972,11 +975,12 @@ const html = `<!doctype html>
       const maxIterations = Math.max(4, Math.min(286, Math.round(Number(boIterationsInput.value) || 25)));
       boIterationsInput.value = String(maxIterations);
       const candidates = generateIntegerCandidates(10);
+      const rgbSeed = findRyBwParts();
       const observations = [];
       let best = null;
 
       for (let iter = 1; iter <= maxIterations; iter += 1) {
-        const candidate = chooseBoCandidate(candidates, observations);
+        const candidate = chooseBoCandidate(candidates, observations, rgbSeed ? rgbSeed.parts : null);
         if (!candidate) break;
         const distance = objectiveForParts(candidate, rgbs, targetHex);
         const observation = { iter, parts: candidate, distance };
@@ -984,7 +988,7 @@ const html = `<!doctype html>
         if (!best || distance < best.distance) best = observation;
       }
 
-      return { observations, best };
+      return { observations, best, rgbSeed };
     }
 
     function renderBo(result) {
@@ -1009,7 +1013,8 @@ const html = `<!doctype html>
         row.innerHTML = "<td>" + obs.iter + "</td><td>" + obs.parts.join(":") + "</td><td>" + obs.distance.toFixed(2) + "</td><td>" + Math.min(...result.observations.slice(0, obs.iter).map((item) => item.distance)).toFixed(2) + "</td>";
         boRows.appendChild(row);
       }
-      boStatus.textContent = "Best after " + result.observations.length + " BO probes: " + result.best.parts.join(":") + " with distance " + result.best.distance.toFixed(2) + ".";
+      const seedText = result.rgbSeed ? " Started from RGB estimate " + result.rgbSeed.parts.join(":") + "." : "";
+      boStatus.textContent = "Best after " + result.observations.length + " BO probes: " + result.best.parts.join(":") + " with distance " + result.best.distance.toFixed(2) + "." + seedText;
     }
 
     function calculateMixHex() {
