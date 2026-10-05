@@ -275,9 +275,26 @@ const html = `<!doctype html>
       line-height: 1.4;
     }
 
+    .bo-graph {
+      width: 100%;
+      height: 170px;
+      margin-top: 12px;
+      border: 1px solid #edf0f2;
+      border-radius: 8px;
+      background: #fbfcfd;
+      overflow: hidden;
+    }
+
+    .bo-table-wrap {
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid #edf0f2;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
     .bo-table {
       width: 100%;
-      margin-top: 12px;
       border-collapse: collapse;
       font-size: 0.86rem;
     }
@@ -288,6 +305,14 @@ const html = `<!doctype html>
       border-bottom: 1px solid #edf0f2;
       text-align: right;
       white-space: nowrap;
+      background: #fff;
+    }
+
+    .bo-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #fbfcfd;
     }
 
     .bo-table th:first-child,
@@ -529,12 +554,15 @@ const html = `<!doctype html>
               <button id="applyBo" type="button">Apply Best</button>
               <div id="boStatus" class="bo-status">Tests integer RYBW candidates that sum to 10.</div>
             </div>
-            <table class="bo-table" aria-label="BO convergence table">
-              <thead>
-                <tr><th>Iter</th><th>R:Y:B:W</th><th>Distance</th><th>Best</th></tr>
-              </thead>
-              <tbody id="boRows"></tbody>
-            </table>
+            <div id="boGraph" class="bo-graph"></div>
+            <div class="bo-table-wrap">
+              <table class="bo-table" aria-label="BO convergence table">
+                <thead>
+                  <tr><th>Iter</th><th>R:Y:B:W</th><th>Distance</th><th>Best</th></tr>
+                </thead>
+                <tbody id="boRows"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -602,6 +630,7 @@ const html = `<!doctype html>
     const applyBoButton = document.getElementById("applyBo");
     const boIterationsInput = document.getElementById("boIterations");
     const boStatus = document.getElementById("boStatus");
+    const boGraph = document.getElementById("boGraph");
     const boRows = document.getElementById("boRows");
     const ciedeValue = document.getElementById("ciedeValue");
     const labValue = document.getElementById("labValue");
@@ -857,7 +886,7 @@ const html = `<!doctype html>
       targetMixInput.innerHTML = "";
       for (const parts of generateIntegerCandidates(10)) {
         const option = document.createElement("option");
-        const hex = rgbToHex(mixRgbForParts(parts, rgbs));
+        const hex = rgbToHex(nonlinearMixRgbForParts(parts, rgbs));
         option.value = parts.join(":");
         option.textContent = parts.join(":") + "  " + hex;
         option.dataset.hex = hex;
@@ -885,8 +914,24 @@ const html = `<!doctype html>
       };
     }
 
+    function nonlinearMixRgbForParts(parts, rgbs) {
+      const linear = mixRgbForParts(parts, rgbs);
+      const total = parts.reduce((sum, value) => sum + value, 0);
+      const red = parts[0] / total;
+      const yellow = parts[1] / total;
+      const blue = parts[2] / total;
+      const water = parts[3] / total;
+      const saturation = 1 - 0.18 * water + 0.08 * Math.sqrt(red * blue);
+      const warmShift = 18 * red * yellow - 10 * blue * water;
+      return {
+        r: 255 * Math.pow(Math.max(0, Math.min(255, linear.r + warmShift)) / 255, 0.94),
+        g: 255 * Math.pow(Math.max(0, Math.min(255, linear.g + 10 * yellow - 6 * red * blue * 10)) / 255, 0.98),
+        b: 255 * Math.pow(Math.max(0, Math.min(255, linear.b + 12 * blue - 8 * yellow)) / 255, 1.04) * saturation + 255 * (1 - saturation) * water * 0.12
+      };
+    }
+
     function objectiveForParts(parts, rgbs, targetHex) {
-      return ciede2000(hexToLab(targetHex), hexToLab(rgbToHex(mixRgbForParts(parts, rgbs))));
+      return ciede2000(hexToLab(targetHex), hexToLab(rgbToHex(nonlinearMixRgbForParts(parts, rgbs))));
     }
 
     function candidateDistance(a, b) {
@@ -944,11 +989,21 @@ const html = `<!doctype html>
 
     function renderBo(result) {
       boRows.innerHTML = "";
+      boGraph.innerHTML = "";
       if (!result || !result.best) {
         boStatus.textContent = "Enter valid target and precursor RGB values before running BO.";
         return;
       }
       lastBoBest = result.best;
+      const bestSeries = result.observations.map((obs, index) => Math.min(...result.observations.slice(0, index + 1).map((item) => item.distance)));
+      const maxY = Math.max(...bestSeries, 1);
+      const points = bestSeries.map((value, index) => {
+        const x = 20 + (index / Math.max(1, bestSeries.length - 1)) * 320;
+        const y = 140 - (value / maxY) * 110;
+        return x.toFixed(1) + "," + y.toFixed(1);
+      }).join(" ");
+      const lastPoint = points.split(" ")[points.split(" ").length - 1].split(",");
+      boGraph.innerHTML = '<svg viewBox="0 0 360 160" width="100%" height="100%" role="img" aria-label="BO convergence graph"><line x1="20" y1="140" x2="345" y2="140" stroke="#d7dde3"/><line x1="20" y1="20" x2="20" y2="140" stroke="#d7dde3"/><polyline points="' + points + '" fill="none" stroke="#1f6feb" stroke-width="3"/><circle cx="' + lastPoint[0] + '" cy="' + lastPoint[1] + '" r="4" fill="#1b8a5a"/><text x="24" y="18" font-size="11" fill="#5f6368">best distance</text><text x="300" y="154" font-size="11" fill="#5f6368">iterations</text></svg>';
       for (const obs of result.observations.slice(-12)) {
         const row = document.createElement("tr");
         row.innerHTML = "<td>" + obs.iter + "</td><td>" + obs.parts.join(":") + "</td><td>" + obs.distance.toFixed(2) + "</td><td>" + Math.min(...result.observations.slice(0, obs.iter).map((item) => item.distance)).toFixed(2) + "</td>";
@@ -959,7 +1014,8 @@ const html = `<!doctype html>
 
     function calculateMixHex() {
       let total = 0;
-      const acc = { r: 0, g: 0, b: 0 };
+      const rgbs = [];
+      const parts = [];
 
       for (const key of Object.keys(precursorInputs)) {
         const input = precursorInputs[key];
@@ -970,13 +1026,12 @@ const html = `<!doctype html>
         input.part.value = String(part);
         input.swatch.style.setProperty("--swatch", hex);
         total += part;
-        acc.r += rgb.r * part;
-        acc.g += rgb.g * part;
-        acc.b += rgb.b * part;
+        rgbs.push(rgb);
+        parts.push(part);
       }
 
       if (total !== 10) return null;
-      return rgbToHex({ r: acc.r / total, g: acc.g / total, b: acc.b / total });
+      return rgbToHex(nonlinearMixRgbForParts(parts, rgbs));
     }
 
     function describe(value, standard) {
