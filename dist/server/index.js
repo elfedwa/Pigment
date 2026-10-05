@@ -552,7 +552,7 @@ const html = `<!doctype html>
               <div class="rgb-field"><span>Iterations</span><input id="boIterations" type="number" value="25" min="4" max="286" step="1"></div>
               <button id="runBo" type="button">Run BO Probe</button>
               <button id="applyBo" type="button">Apply Best</button>
-              <div id="boStatus" class="bo-status">Tests integer RYBW candidates that sum to 10.</div>
+              <div id="boStatus" class="bo-status">BO starts from the RGB estimate, then minimizes CIEDE2000 against the nonlinear mixture target. It is most relevant for light and muted targets.</div>
             </div>
             <div id="boGraph" class="bo-graph"></div>
             <div class="bo-table-wrap">
@@ -1014,7 +1014,7 @@ const html = `<!doctype html>
         boRows.appendChild(row);
       }
       const seedText = result.rgbSeed ? " Started from RGB estimate " + result.rgbSeed.parts.join(":") + "." : "";
-      boStatus.textContent = "Best after " + result.observations.length + " BO probes: " + result.best.parts.join(":") + " with distance " + result.best.distance.toFixed(2) + "." + seedText;
+      boStatus.textContent = "Best after " + result.observations.length + " BO probes: " + result.best.parts.join(":") + " with CIEDE2000 distance " + result.best.distance.toFixed(2) + "." + seedText + " BO is most useful when the target is light or muted because nonlinear mixing can move away from the RGB estimate.";
     }
 
     function calculateMixHex() {
