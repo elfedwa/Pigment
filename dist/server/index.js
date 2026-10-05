@@ -33,9 +33,9 @@ const html = `<!doctype html>
     }
 
     main {
-      width: min(1100px, calc(100% - 32px));
+      width: min(1280px, calc(100% - 28px));
       margin: 0 auto;
-      padding: 42px 0;
+      padding: 34px 0;
     }
 
     header {
@@ -83,8 +83,8 @@ const html = `<!doctype html>
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 380px;
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
       align-items: start;
     }
 
@@ -96,7 +96,7 @@ const html = `<!doctype html>
     }
 
     .workspace {
-      padding: 22px;
+      padding: 18px;
     }
 
     .compare {
@@ -113,7 +113,7 @@ const html = `<!doctype html>
     }
 
     .swatch {
-      height: 220px;
+      height: 190px;
       border-bottom: 1px solid var(--line);
       background: var(--swatch);
     }
@@ -191,7 +191,7 @@ const html = `<!doctype html>
 
     .init-panel {
       margin-top: 18px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
@@ -213,22 +213,22 @@ const html = `<!doctype html>
     .init-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
 
     .precursor {
       display: grid;
-      grid-template-columns: 52px repeat(4, minmax(70px, 1fr));
-      gap: 10px;
+      grid-template-columns: 44px repeat(4, minmax(58px, 1fr));
+      gap: 7px;
       align-items: center;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #edf0f2;
       border-radius: 8px;
       background: #fbfcfd;
     }
 
     .mini-swatch {
-      height: 52px;
+      height: 44px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--swatch);
@@ -236,11 +236,17 @@ const html = `<!doctype html>
 
     .rgb-field span {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       color: var(--muted);
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 850;
       text-transform: uppercase;
+    }
+
+    .rgb-field input[type="number"] {
+      min-height: 36px;
+      padding: 0 7px;
+      font-size: 0.9rem;
     }
 
     button {
@@ -260,7 +266,7 @@ const html = `<!doctype html>
     .result {
       position: sticky;
       top: 16px;
-      padding: 22px;
+      padding: 18px;
     }
 
     .score {
@@ -332,17 +338,44 @@ const html = `<!doctype html>
       line-height: 1.55;
     }
 
-    @media (max-width: 860px) {
-      header, .layout, .compare, .standard-row, .init-grid {
+    @media (max-width: 980px) {
+      header, .layout, .standard-row {
+        grid-template-columns: 1fr;
+      }
+
+      .result { position: static; }
+    }
+
+    @media (max-width: 720px) {
+      .compare, .init-grid {
         grid-template-columns: 1fr;
       }
 
       .precursor {
-        grid-template-columns: 52px repeat(2, minmax(0, 1fr));
+        grid-template-columns: 44px repeat(2, minmax(0, 1fr));
       }
 
-      .result { position: static; }
       .swatch { height: 160px; }
+    }
+
+    @media (max-width: 420px) {
+      main {
+        width: min(100% - 18px, 1280px);
+        padding: 20px 0;
+      }
+
+      .workspace, .result {
+        padding: 12px;
+      }
+
+      .precursor {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .mini-swatch {
+        grid-column: 1 / -1;
+        height: 34px;
+      }
     }
   </style>
 </head>
