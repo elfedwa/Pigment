@@ -256,6 +256,45 @@ const html = `<!doctype html>
       font-size: 0.9rem;
     }
 
+    .bo-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #edf0f2;
+    }
+
+    .bo-controls {
+      display: grid;
+      grid-template-columns: minmax(110px, 150px) auto auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .bo-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .bo-table {
+      width: 100%;
+      margin-top: 12px;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    .bo-table th,
+    .bo-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid #edf0f2;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .bo-table th:first-child,
+    .bo-table td:first-child {
+      text-align: left;
+    }
+
     button {
       min-height: 40px;
       padding: 0 12px;
@@ -362,6 +401,10 @@ const html = `<!doctype html>
         grid-template-columns: 44px repeat(2, minmax(0, 1fr));
       }
 
+      .bo-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .swatch { height: 160px; }
     }
 
@@ -383,6 +426,10 @@ const html = `<!doctype html>
         grid-column: 1 / -1;
         height: 34px;
       }
+
+      .bo-controls {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -403,8 +450,9 @@ const html = `<!doctype html>
             <div id="swatch1" class="swatch" style="--swatch:#ff6b35"></div>
             <div class="card-body">
               <label for="color1">Target color</label>
-              <input id="color1" type="color" value="#ff6b35">
-              <input id="hex1" type="text" value="#ff6b35" maxlength="7" spellcheck="false" aria-label="Target color HEX value">
+              <input id="color1" type="color" value="#c68348" disabled>
+              <select id="targetMix" aria-label="Discrete target mixture"></select>
+              <input id="hex1" type="text" value="#c68348" maxlength="7" spellcheck="false" aria-label="Target color HEX value" readonly>
             </div>
           </div>
 
@@ -435,9 +483,9 @@ const html = `<!doctype html>
               <label for="redR">Red sensor RGB</label>
               <div class="precursor">
                 <div id="redSwatch" class="mini-swatch" style="--swatch:#ff2d2d"></div>
-                <div class="rgb-field"><span>R</span><input id="redR" type="number" value="255" min="0" max="255" step="1" aria-label="Red precursor R"></div>
-                <div class="rgb-field"><span>G</span><input id="redG" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor G"></div>
-                <div class="rgb-field"><span>B</span><input id="redB" type="number" value="45" min="0" max="255" step="1" aria-label="Red precursor B"></div>
+                <div class="rgb-field"><span>R</span><input id="redR" type="number" value="192" min="0" max="255" step="1" aria-label="Red precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="redG" type="number" value="56" min="0" max="255" step="1" aria-label="Red precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="redB" type="number" value="48" min="0" max="255" step="1" aria-label="Red precursor B"></div>
                 <div class="rgb-field"><span>Ratio</span><input id="redPart" type="number" value="5" min="0" max="10" step="1" aria-label="Red proportion"></div>
               </div>
             </div>
@@ -445,9 +493,9 @@ const html = `<!doctype html>
               <label for="yellowR">Yellow sensor RGB</label>
               <div class="precursor">
                 <div id="yellowSwatch" class="mini-swatch" style="--swatch:#ffd735"></div>
-                <div class="rgb-field"><span>R</span><input id="yellowR" type="number" value="255" min="0" max="255" step="1" aria-label="Yellow precursor R"></div>
-                <div class="rgb-field"><span>G</span><input id="yellowG" type="number" value="215" min="0" max="255" step="1" aria-label="Yellow precursor G"></div>
-                <div class="rgb-field"><span>B</span><input id="yellowB" type="number" value="53" min="0" max="255" step="1" aria-label="Yellow precursor B"></div>
+                <div class="rgb-field"><span>R</span><input id="yellowR" type="number" value="218" min="0" max="255" step="1" aria-label="Yellow precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="yellowG" type="number" value="176" min="0" max="255" step="1" aria-label="Yellow precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="yellowB" type="number" value="65" min="0" max="255" step="1" aria-label="Yellow precursor B"></div>
                 <div class="rgb-field"><span>Ratio</span><input id="yellowPart" type="number" value="3" min="0" max="10" step="1" aria-label="Yellow proportion"></div>
               </div>
             </div>
@@ -455,9 +503,9 @@ const html = `<!doctype html>
               <label for="blueR">Blue sensor RGB</label>
               <div class="precursor">
                 <div id="blueSwatch" class="mini-swatch" style="--swatch:#246bff"></div>
-                <div class="rgb-field"><span>R</span><input id="blueR" type="number" value="36" min="0" max="255" step="1" aria-label="Blue precursor R"></div>
-                <div class="rgb-field"><span>G</span><input id="blueG" type="number" value="107" min="0" max="255" step="1" aria-label="Blue precursor G"></div>
-                <div class="rgb-field"><span>B</span><input id="blueB" type="number" value="255" min="0" max="255" step="1" aria-label="Blue precursor B"></div>
+                <div class="rgb-field"><span>R</span><input id="blueR" type="number" value="44" min="0" max="255" step="1" aria-label="Blue precursor R"></div>
+                <div class="rgb-field"><span>G</span><input id="blueG" type="number" value="86" min="0" max="255" step="1" aria-label="Blue precursor G"></div>
+                <div class="rgb-field"><span>B</span><input id="blueB" type="number" value="168" min="0" max="255" step="1" aria-label="Blue precursor B"></div>
                 <div class="rgb-field"><span>Ratio</span><input id="bluePart" type="number" value="1" min="0" max="10" step="1" aria-label="Blue proportion"></div>
               </div>
             </div>
@@ -471,6 +519,22 @@ const html = `<!doctype html>
                 <div class="rgb-field"><span>Ratio</span><input id="waterPart" type="number" value="1" min="0" max="10" step="1" aria-label="Water proportion"></div>
               </div>
             </div>
+          </div>
+
+          <div class="bo-panel" aria-label="Bayesian optimization convergence probe">
+            <label for="boIterations">BO convergence probe</label>
+            <div class="bo-controls">
+              <div class="rgb-field"><span>Iterations</span><input id="boIterations" type="number" value="25" min="4" max="286" step="1"></div>
+              <button id="runBo" type="button">Run BO Probe</button>
+              <button id="applyBo" type="button">Apply Best</button>
+              <div id="boStatus" class="bo-status">Tests integer RYBW candidates that sum to 10.</div>
+            </div>
+            <table class="bo-table" aria-label="BO convergence table">
+              <thead>
+                <tr><th>Iter</th><th>R:Y:B:W</th><th>Distance</th><th>Best</th></tr>
+              </thead>
+              <tbody id="boRows"></tbody>
+            </table>
           </div>
         </div>
 
@@ -521,6 +585,7 @@ const html = `<!doctype html>
   <script>
     const color1Input = document.getElementById("color1");
     const color2Input = document.getElementById("color2");
+    const targetMixInput = document.getElementById("targetMix");
     const hex1Input = document.getElementById("hex1");
     const hex2Input = document.getElementById("hex2");
     const standardInput = document.getElementById("standard");
@@ -533,6 +598,11 @@ const html = `<!doctype html>
     const noteEl = document.getElementById("note");
     const findRatioButton = document.getElementById("findRatio");
     const resetRatioButton = document.getElementById("resetRatio");
+    const runBoButton = document.getElementById("runBo");
+    const applyBoButton = document.getElementById("applyBo");
+    const boIterationsInput = document.getElementById("boIterations");
+    const boStatus = document.getElementById("boStatus");
+    const boRows = document.getElementById("boRows");
     const ciedeValue = document.getElementById("ciedeValue");
     const labValue = document.getElementById("labValue");
     const frechetValue = document.getElementById("frechetValue");
@@ -548,6 +618,8 @@ const html = `<!doctype html>
     let helmlab = null;
     let helmlabFailed = false;
     let lastSolve = null;
+    let lastBoBest = null;
+    let targetParts = [5, 3, 1, 1];
 
     const labels = {
       ciede2000: "CIEDE2000 Delta E",
@@ -766,6 +838,125 @@ const html = `<!doctype html>
       precursorInputs.water.part.value = String(parts[3]);
     }
 
+    function generateIntegerCandidates(total) {
+      const candidates = [];
+      for (let r = 0; r <= total; r += 1) {
+        for (let y = 0; y <= total - r; y += 1) {
+          for (let b = 0; b <= total - r - y; b += 1) {
+            candidates.push([r, y, b, total - r - y - b]);
+          }
+        }
+      }
+      return candidates;
+    }
+
+    function updateTargetOptions() {
+      const rgbs = getPrecursorRgbs();
+      if (rgbs.some((rgb) => !rgb)) return;
+      const current = targetMixInput.value || targetParts.join(":");
+      targetMixInput.innerHTML = "";
+      for (const parts of generateIntegerCandidates(10)) {
+        const option = document.createElement("option");
+        const hex = rgbToHex(mixRgbForParts(parts, rgbs));
+        option.value = parts.join(":");
+        option.textContent = parts.join(":") + "  " + hex;
+        option.dataset.hex = hex;
+        targetMixInput.appendChild(option);
+      }
+      targetMixInput.value = [...targetMixInput.options].some((option) => option.value === current) ? current : "5:3:1:1";
+      setTargetFromOption();
+    }
+
+    function setTargetFromOption() {
+      const selected = targetMixInput.selectedOptions[0];
+      if (!selected) return;
+      targetParts = targetMixInput.value.split(":").map((value) => Number(value));
+      hex1Input.value = selected.dataset.hex;
+      color1Input.value = selected.dataset.hex;
+      swatch1.style.setProperty("--swatch", selected.dataset.hex);
+    }
+
+    function mixRgbForParts(parts, rgbs) {
+      const total = parts.reduce((sum, value) => sum + value, 0);
+      return {
+        r: rgbs.reduce((sum, rgb, index) => sum + rgb.r * parts[index], 0) / total,
+        g: rgbs.reduce((sum, rgb, index) => sum + rgb.g * parts[index], 0) / total,
+        b: rgbs.reduce((sum, rgb, index) => sum + rgb.b * parts[index], 0) / total
+      };
+    }
+
+    function objectiveForParts(parts, rgbs, targetHex) {
+      return ciede2000(hexToLab(targetHex), hexToLab(rgbToHex(mixRgbForParts(parts, rgbs))));
+    }
+
+    function candidateDistance(a, b) {
+      return Math.sqrt(a.reduce((sum, value, index) => sum + Math.pow(value - b[index], 2), 0));
+    }
+
+    function chooseBoCandidate(candidates, observations) {
+      if (observations.length === 0) return candidates.find((candidate) => candidate.join(":") === "5:3:1:1") || candidates[0];
+      let bestCandidate = null;
+      let bestAcquisition = Infinity;
+      for (const candidate of candidates) {
+        if (observations.some((obs) => obs.parts.join(":") === candidate.join(":"))) continue;
+        let weighted = 0;
+        let weightTotal = 0;
+        let nearest = Infinity;
+        for (const obs of observations) {
+          const d = candidateDistance(candidate, obs.parts);
+          nearest = Math.min(nearest, d);
+          const weight = 1 / (d * d + 0.2);
+          weighted += obs.distance * weight;
+          weightTotal += weight;
+        }
+        const predicted = weighted / weightTotal;
+        const acquisition = predicted - 0.12 * nearest;
+        if (acquisition < bestAcquisition) {
+          bestAcquisition = acquisition;
+          bestCandidate = candidate;
+        }
+      }
+      return bestCandidate;
+    }
+
+    function runBoProbe() {
+      if (!validHex(hex1Input.value)) return null;
+      const rgbs = getPrecursorRgbs();
+      if (rgbs.some((rgb) => !rgb)) return null;
+      const targetHex = normalizeHex(hex1Input.value);
+      const maxIterations = Math.max(4, Math.min(286, Math.round(Number(boIterationsInput.value) || 25)));
+      boIterationsInput.value = String(maxIterations);
+      const candidates = generateIntegerCandidates(10);
+      const observations = [];
+      let best = null;
+
+      for (let iter = 1; iter <= maxIterations; iter += 1) {
+        const candidate = chooseBoCandidate(candidates, observations);
+        if (!candidate) break;
+        const distance = objectiveForParts(candidate, rgbs, targetHex);
+        const observation = { iter, parts: candidate, distance };
+        observations.push(observation);
+        if (!best || distance < best.distance) best = observation;
+      }
+
+      return { observations, best };
+    }
+
+    function renderBo(result) {
+      boRows.innerHTML = "";
+      if (!result || !result.best) {
+        boStatus.textContent = "Enter valid target and precursor RGB values before running BO.";
+        return;
+      }
+      lastBoBest = result.best;
+      for (const obs of result.observations.slice(-12)) {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td>" + obs.iter + "</td><td>" + obs.parts.join(":") + "</td><td>" + obs.distance.toFixed(2) + "</td><td>" + Math.min(...result.observations.slice(0, obs.iter).map((item) => item.distance)).toFixed(2) + "</td>";
+        boRows.appendChild(row);
+      }
+      boStatus.textContent = "Best after " + result.observations.length + " BO probes: " + result.best.parts.join(":") + " with distance " + result.best.distance.toFixed(2) + ".";
+    }
+
     function calculateMixHex() {
       let total = 0;
       const acc = { r: 0, g: 0, b: 0 };
@@ -884,20 +1075,28 @@ const html = `<!doctype html>
     Object.values(precursorInputs).forEach((input) => {
       input.r.addEventListener("input", () => {
         lastSolve = null;
+        updateTargetOptions();
         update();
       });
       input.g.addEventListener("input", () => {
         lastSolve = null;
+        updateTargetOptions();
         update();
       });
       input.b.addEventListener("input", () => {
         lastSolve = null;
+        updateTargetOptions();
         update();
       });
       input.part.addEventListener("input", () => {
         lastSolve = null;
         update();
       });
+    });
+    targetMixInput.addEventListener("change", () => {
+      lastSolve = null;
+      setTargetFromOption();
+      update();
     });
     findRatioButton.addEventListener("click", () => {
       const solution = findRyBwParts();
@@ -912,15 +1111,35 @@ const html = `<!doctype html>
     });
     resetRatioButton.addEventListener("click", () => {
       lastSolve = null;
+      lastBoBest = null;
       applyParts([5, 3, 1, 1]);
+      update();
+    });
+    runBoButton.addEventListener("click", () => {
+      renderBo(runBoProbe());
+    });
+    applyBoButton.addEventListener("click", () => {
+      if (!lastBoBest) renderBo(runBoProbe());
+      if (!lastBoBest) return;
+      lastSolve = { parts: lastBoBest.parts, iterations: lastBoBest.iter };
+      applyParts(lastBoBest.parts);
       update();
     });
     document.querySelectorAll("button[data-a]").forEach((button) => {
       button.addEventListener("click", () => {
-        hex1Input.value = button.dataset.a;
+        const options = [...targetMixInput.options];
+        const closest = options.reduce((best, option) => {
+          const distance = rgbDistance(button.dataset.a, option.dataset.hex);
+          return !best || distance < best.distance ? { option, distance } : best;
+        }, null);
+        if (closest) {
+          targetMixInput.value = closest.option.value;
+          setTargetFromOption();
+        }
         update();
       });
     });
+    updateTargetOptions();
     update();
   </script>
 </body>
