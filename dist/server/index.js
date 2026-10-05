@@ -205,6 +205,13 @@ const html = `<!doctype html>
       margin-bottom: 14px;
     }
 
+    .init-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .init-title {
       margin: 0;
       font-size: 1.05rem;
@@ -415,7 +422,11 @@ const html = `<!doctype html>
           <div class="init-head">
             <div>
               <h2 class="init-title">Initialization</h2>
-              <div class="note">Enter the RGB values detected by the sensor for each real precursor. Default RYBW ratio is 5:3:1:1.</div>
+              <div class="note">Enter the RGB values detected by the sensor for each real precursor. Ratios sum to 10.</div>
+            </div>
+            <div class="init-actions">
+              <button id="findRatio" type="button">Find RYBW</button>
+              <button id="resetRatio" type="button">Reset 5:3:1:1</button>
             </div>
           </div>
 
@@ -520,6 +531,8 @@ const html = `<!doctype html>
     const markerEl = document.getElementById("marker");
     const labelEl = document.getElementById("scoreLabel");
     const noteEl = document.getElementById("note");
+    const findRatioButton = document.getElementById("findRatio");
+    const resetRatioButton = document.getElementById("resetRatio");
     const ciedeValue = document.getElementById("ciedeValue");
     const labValue = document.getElementById("labValue");
     const frechetValue = document.getElementById("frechetValue");
@@ -534,6 +547,7 @@ const html = `<!doctype html>
     };
     let helmlab = null;
     let helmlabFailed = false;
+    let lastSolve = null;
 
     const labels = {
       ciede2000: "CIEDE2000 Delta E",
@@ -665,6 +679,74 @@ const html = `<!doctype html>
       return { r, g, b };
     }
 
+    function getPrecursorRgbs() {
+      return Object.keys(precursorInputs).map((key) => readSensorRgb(precursorInputs[key]));
+    }
+
+    function projectToSimplex(values, sum) {
+      const sorted = [...values].sort((a, b) => b - a);
+      let prefix = 0;
+      let theta = 0;
+      for (let i = 0; i < sorted.length; i += 1) {
+        prefix += sorted[i];
+        const candidate = (prefix - sum) / (i + 1);
+        if (i === sorted.length - 1 || sorted[i + 1] <= candidate) {
+          theta = candidate;
+          break;
+        }
+      }
+      return values.map((value) => Math.max(0, value - theta));
+    }
+
+    function findRyBwParts() {
+      if (!validHex(hex1Input.value)) return null;
+      const rgbs = getPrecursorRgbs();
+      if (rgbs.some((rgb) => !rgb)) return null;
+      const target = hexToRgb(normalizeHex(hex1Input.value));
+      const targetVector = [target.r / 255, target.g / 255, target.b / 255];
+      const colors = rgbs.map((rgb) => [rgb.r / 255, rgb.g / 255, rgb.b / 255]);
+      let weights = [0.5, 0.3, 0.1, 0.1];
+      const step = 0.18;
+
+      let iterations = 0;
+      let previousLoss = Infinity;
+      for (let iter = 0; iter < 900; iter += 1) {
+        const mixed = [0, 0, 0];
+        for (let i = 0; i < 4; i += 1) {
+          mixed[0] += colors[i][0] * weights[i];
+          mixed[1] += colors[i][1] * weights[i];
+          mixed[2] += colors[i][2] * weights[i];
+        }
+        const error = [
+          mixed[0] - targetVector[0],
+          mixed[1] - targetVector[1],
+          mixed[2] - targetVector[2]
+        ];
+        const loss = error[0] * error[0] + error[1] * error[1] + error[2] * error[2];
+        iterations = iter + 1;
+        if (Math.abs(previousLoss - loss) < 1e-12) break;
+        previousLoss = loss;
+        const gradient = colors.map((color) => 2 * (color[0] * error[0] + color[1] * error[1] + color[2] * error[2]));
+        weights = projectToSimplex(weights.map((value, index) => value - step * gradient[index]), 1);
+      }
+
+      const parts = weights.map((value) => value * 10);
+      const rounded = parts.map((value) => Math.round(value * 100) / 100);
+      const drift = 10 - rounded.reduce((sum, value) => sum + value, 0);
+      rounded[rounded.length - 1] = Math.round((rounded[rounded.length - 1] + drift) * 100) / 100;
+      return {
+        parts: rounded.map((value) => Math.max(0, value)),
+        iterations
+      };
+    }
+
+    function applyParts(parts) {
+      precursorInputs.red.part.value = parts[0].toFixed(2);
+      precursorInputs.yellow.part.value = parts[1].toFixed(2);
+      precursorInputs.blue.part.value = parts[2].toFixed(2);
+      precursorInputs.water.part.value = parts[3].toFixed(2);
+    }
+
     function calculateMixHex() {
       let total = 0;
       const acc = { r: 0, g: 0, b: 0 };
@@ -703,7 +785,9 @@ const html = `<!doctype html>
       labelEl.textContent = labels[standard];
       distanceEl.textContent = Number.isFinite(value) ? value.toFixed(standard === "helmlab" ? 4 : 2) : "--";
       meaningEl.textContent = Number.isFinite(value) ? describe(value, standard) : "This standard is not available yet.";
-      noteEl.innerHTML = note || "Mix source: RYBW sensor colors at " + precursorInputs.red.part.value + ":" + precursorInputs.yellow.part.value + ":" + precursorInputs.blue.part.value + ":" + precursorInputs.water.part.value + ".";
+      const mixNote = "Mix source: RYBW sensor colors at " + precursorInputs.red.part.value + ":" + precursorInputs.yellow.part.value + ":" + precursorInputs.blue.part.value + ":" + precursorInputs.water.part.value + ".";
+      const solveNote = lastSolve ? " Found in " + lastSolve.iterations + " optimizer iterations, constrained to total 10." : "";
+      noteEl.innerHTML = note || (mixNote + solveNote);
       const scale = standard === "rgb" ? 441 : standard === "helmlab" ? 0.16 : standard === "jnd" ? 5 : 35;
       markerEl.style.transform = "translateX(" + (Math.min(value || 0, scale) / scale * 356) + "px)";
     }
@@ -778,10 +862,38 @@ const html = `<!doctype html>
     hex1Input.addEventListener("input", update);
     standardInput.addEventListener("change", update);
     Object.values(precursorInputs).forEach((input) => {
-      input.r.addEventListener("input", update);
-      input.g.addEventListener("input", update);
-      input.b.addEventListener("input", update);
-      input.part.addEventListener("input", update);
+      input.r.addEventListener("input", () => {
+        lastSolve = null;
+        update();
+      });
+      input.g.addEventListener("input", () => {
+        lastSolve = null;
+        update();
+      });
+      input.b.addEventListener("input", () => {
+        lastSolve = null;
+        update();
+      });
+      input.part.addEventListener("input", () => {
+        lastSolve = null;
+        update();
+      });
+    });
+    findRatioButton.addEventListener("click", () => {
+      const solution = findRyBwParts();
+      if (!solution) {
+        distanceEl.textContent = "--";
+        meaningEl.innerHTML = '<span class="error">Enter valid target and precursor RGB values before solving.</span>';
+        return;
+      }
+      lastSolve = solution;
+      applyParts(solution.parts);
+      update();
+    });
+    resetRatioButton.addEventListener("click", () => {
+      lastSolve = null;
+      applyParts([5, 3, 1, 1]);
+      update();
     });
     document.querySelectorAll("button[data-a]").forEach((button) => {
       button.addEventListener("click", () => {
